@@ -38,6 +38,8 @@ pub struct BsnType {
     pub path: Path,
     pub variant: Option<Ident>,
     pub fields: BsnFields,
+    /// Whether this type was prefixed with `~`, meaning its path names a template type and is used as written.
+    pub is_template: bool,
 }
 
 #[derive(Debug)]

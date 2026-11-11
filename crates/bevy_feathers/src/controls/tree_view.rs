@@ -16,7 +16,7 @@ use bevy_math::Rot2;
 use bevy_picking::{cursor::EntityCursor, hover::Hovered};
 use bevy_reflect::{prelude::ReflectDefault, Reflect};
 use bevy_scene::{bsn, bsn_list, Scene, SceneComponent, SceneList};
-use bevy_text::{FontSize, FontSourceTemplate, FontWeight};
+use bevy_text::{FontSize, FontSource, FontWeight};
 use bevy_ui::{
     px, AlignItems, Display, Expandable, Expanded, FlexDirection, InteractionDisabled,
     JustifyContent, Node, Outline, Overflow, PositionType, Selected, UiRect, UiTransform,
@@ -166,7 +166,7 @@ impl FeathersTreeItem {
                 ThemeBackgroundColor(tokens::LISTROW_BG)
                 InheritableThemeTextColor(tokens::LISTROW_TEXT)
                 InheritableFont {
-                    font: FontSourceTemplate::Families(fonts::SANS),
+                    font: FontSource::Families(fonts::SANS),
                     font_size: FontSize::Px(14.0),
                     weight: FontWeight::NORMAL,
                 }

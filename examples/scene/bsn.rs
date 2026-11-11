@@ -1,7 +1,6 @@
 //! This example demonstrates how to use BSN to compose scenes.
 use bevy::{
-    ecs::template::EntityTemplate, prelude::*, scene::Ready, text::FontSourceTemplate,
-    ui_widgets::Button,
+    ecs::template::EntityTemplate, prelude::*, scene::Ready, text::FontSource, ui_widgets::Button,
 };
 
 fn main() {
@@ -68,7 +67,7 @@ fn button(label: &str, root_entity: EntityTemplate) -> impl Scene {
         Children [
             Text(label)
             TextFont {
-                font: FontSourceTemplate::Handle("fonts/FiraSans-Bold.ttf"),
+                font: FontSource::Handle("fonts/FiraSans-Bold.ttf"),
                 font_size: px(33.0),
             }
             TextColor(Color::srgb(0.9, 0.9, 0.9))

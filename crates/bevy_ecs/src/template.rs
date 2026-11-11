@@ -411,9 +411,32 @@ impl<T: Clone + Default + Unpin> FromTemplate for T {
     message = "This type does not manually implement FromTemplate, and it must. If you are deriving FromTemplate and you see this, it is likely because \
                a field does not have a FromTemplate impl. This can usually be fixed by using a custom template for that field. \
                Ex: for an Option<Handle<Image>> field, annotate the field with `#[template(OptionTemplate<HandleTemplate<Image>>)]`",
-    note = "FromTemplate currently uses pseudo-specialization to enable FromTemplate to override Default. This error message is a consequence of t."
+    note = "FromTemplate currently uses pseudo-specialization to enable FromTemplate to override Default. This error message is a consequence of t.",
+    note = "If this comes from a `bsn!` field value that names a generated template type (ex: `FontSourceTemplate::Families(..)`), \
+            either name the type it builds instead (`FontSource::Families(..)`), or prefix the template path with `~`."
 )]
 pub trait SpecializeFromTemplate: Sized {}
+
+/// Resolves the type that a `Type::Variant` (or `Type::CONST`) path refers to when it is written as a field value in `bsn!`.
+///
+/// Most types resolve to themselves: they are constructed directly and then converted into the field's template with
+/// [`Into`]. Enums that derive [`FromTemplate`] resolve to their generated template type instead, so that
+/// `FontSource::Handle("font.ttf")` constructs a `FontSourceTemplate::Handle`, and variant arguments can use
+/// template-only values such as asset paths and entity references.
+///
+/// Generated template types intentionally do not implement this, so they must be written with `~` in field position
+/// (`~FontSourceTemplate::Handle(..)`). Other `!Unpin` types (such as types containing a `Handle`) also do not
+/// implement this, and can be written with `~` or inside a `{ .. }` expression instead.
+pub trait TemplatePath {
+    /// The type whose variant or associated item the path resolves to.
+    type Path;
+}
+
+// Types that derive FromTemplate (and the templates generated for enums) are `!Unpin` via the same "auto trait
+// specialization" trick used by `FromTemplate`, so derived enums can provide their own impl without overlapping this one.
+impl<T: Unpin> TemplatePath for T {
+    type Path = T;
+}
 
 /// A [`Template`] reference to an [`Entity`].
 ///

@@ -284,7 +284,23 @@ pub(crate) fn derive_from_template(input: TokenStream) -> TokenStream {
         .predicates
         .push(parse_quote! { for<'a> [()]: #bevy_ecs::template::SpecializeFromTemplate });
 
+    // Enum variant paths written as `bsn!` field values resolve to the generated template. The template itself is made
+    // `!Unpin` so it does not get the blanket `TemplatePath` impl, which requires it to be written with `~`.
+    let template_path = if matches!(ast.data, Data::Enum(_)) {
+        quote! {
+            impl #impl_generics #bevy_ecs::template::TemplatePath for #type_ident #type_generics #where_clause {
+                type Path = #template_ident #type_generics;
+            }
+
+            impl #impl_generics ::core::marker::Unpin for #template_ident #type_generics #unpin_where_clause {}
+        }
+    } else {
+        quote! {}
+    };
+
     TokenStream::from(quote! {
+        #template_path
+
         impl #impl_generics #bevy_ecs::template::FromTemplate for #type_ident #type_generics #where_clause {
             type Template = #template_ident #type_generics;
         }

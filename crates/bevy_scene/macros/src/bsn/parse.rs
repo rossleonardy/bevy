@@ -149,6 +149,7 @@ impl BsnEntry {
                             path,
                             variant,
                             fields,
+                            is_template,
                         };
                         if is_template {
                             BsnEntry::TemplatePatch(bsn_type)
@@ -348,6 +349,7 @@ impl Parse for BsnType {
             path,
             variant: enum_variant,
             fields,
+            is_template: false,
         })
     }
 }
@@ -592,7 +594,13 @@ fn tokens_between(begin: Cursor, end: Cursor) -> TokenStream {
 
 impl Parse for BsnValue {
     fn parse(input: ParseStream) -> Result<Self> {
-        let value = if input.peek(Brace) {
+        let value = if input.peek(Tilde) {
+            // `~Path::Variant(..)`: the path names a template type, so it is used as written.
+            input.parse::<Tilde>()?;
+            let mut bsn_type = input.parse::<BsnType>()?;
+            bsn_type.is_template = true;
+            BsnValue::Type(bsn_type)
+        } else if input.peek(Brace) {
             BsnValue::Expr(braced_tokens(input)?)
         } else if input.peek(Token![const]) && input.peek2(Brace) {
             let const_token = input.parse::<Token![const]>()?;

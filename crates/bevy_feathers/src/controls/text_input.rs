@@ -13,7 +13,7 @@ use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::Reflect;
 use bevy_scene::prelude::*;
 use bevy_text::{
-    EditableText, FontSourceTemplate, FontWeight, LineBreak, TextCursorStyle, TextFont, TextLayout,
+    EditableText, FontSource, FontWeight, LineBreak, TextCursorStyle, TextFont, TextLayout,
     TextReadWriteMode,
 };
 use bevy_ui::{
@@ -61,7 +61,7 @@ impl FeathersTextInputContainer {
             ThemeBackgroundColor(tokens::TEXT_INPUT_BG)
             InheritableThemeTextColor(tokens::TEXT_INPUT_TEXT)
             InheritableFont {
-                font: FontSourceTemplate::Families(fonts::SANS),
+                font: FontSource::Families(fonts::SANS),
                 font_size: size::COMPACT_FONT,
                 weight: FontWeight::NORMAL,
             }
@@ -118,7 +118,7 @@ impl FeathersTextInput {
                 linebreak: LineBreak::NoWrap,
             }
             TextFont {
-                font: FontSourceTemplate::Families(fonts::SANS),
+                font: FontSource::Families(fonts::SANS),
                 font_size: size::COMPACT_FONT,
                 weight: FontWeight::NORMAL,
             }

@@ -30,9 +30,7 @@ use bevy_reflect::{prelude::ReflectDefault, Reflect};
 use bevy_scene::{prelude::*, Ready};
 #[cfg(feature = "bevy_settings")]
 use bevy_settings::{ReflectSettingsGroup, SettingsGroup};
-use bevy_text::{
-    EditableText, FontSize, FontSourceTemplate, Justify, LineHeight, TextEdit, TextLayout,
-};
+use bevy_text::{EditableText, FontSize, FontSource, Justify, LineHeight, TextEdit, TextLayout};
 use bevy_ui::{
     prelude::AccessibleLabel, px, AlignItems, AlignSelf, Display, FlexDirection, GridPlacement,
     GridTrack, JustifySelf, Node, RepeatedGridTrack, UiSystems,
@@ -449,7 +447,7 @@ fn color_input_popup() -> Box<dyn Scene> {
                     @corners: RoundedCorners::Left,
                 }
                 InheritableFont {
-                    font: FontSourceTemplate::Handle("embedded://bevy_feathers/assets/fonts/NotoSansSymbols2-U+1F7D5.ttf"),
+                    font: FontSource::Handle("embedded://bevy_feathers/assets/fonts/NotoSansSymbols2-U+1F7D5.ttf"),
                     font_size: FontSize::Px(17.0),
                 }
                 Node {
@@ -716,7 +714,7 @@ fn color_input_popup() -> Box<dyn Scene> {
                         justify: Justify::Center,
                     }
                     InheritableFont {
-                        font: FontSourceTemplate::Handle(fonts::MONO)
+                        font: FontSource::Handle(fonts::MONO)
                     }
                     LineHeight::Px(24.0) // TODO: Make const for this
                     on(hex_input_on_enter_key)

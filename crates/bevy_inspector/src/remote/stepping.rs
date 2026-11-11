@@ -36,7 +36,7 @@ use bevy_remote::{
 };
 use bevy_scene::{bsn, on, Scene};
 use bevy_tasks::{block_on, poll_once, Task};
-use bevy_text::{FontSourceTemplate, FontWeight};
+use bevy_text::{FontSource, FontWeight};
 use bevy_time::{Real, Time};
 use bevy_ui::{px, widget::Text, AlignItems, FlexDirection, InteractionDisabled, Node};
 use bevy_ui_widgets::Activate;
@@ -130,7 +130,7 @@ pub fn stepping_controls() -> impl Scene {
             column_gap: px(8),
         }
         InheritableFont {
-            font: FontSourceTemplate::Families(fonts::SANS),
+            font: FontSource::Families(fonts::SANS),
             font_size: size::MEDIUM_FONT,
             weight: FontWeight::NORMAL,
         }

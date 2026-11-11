@@ -18,7 +18,7 @@ use bevy::{
     input_focus::{tab_navigation::TabGroup, AutoFocus, InputFocus},
     picking::cursor::{EntityCursor, OverrideCursor},
     prelude::*,
-    text::{EditableText, FontSourceTemplate, TextEdit, TextEditChange},
+    text::{EditableText, FontSource, TextEdit, TextEditChange},
     ui::{Checked, Expanded, InteractionDisabled, Selected},
     ui_widgets::{
         checkbox_self_update, listbox_update_selection,
@@ -615,7 +615,7 @@ fn demo_column_1() -> impl Scene {
                         @max_characters: 9usize,
                     }
                     InheritableFont {
-                        font: FontSourceTemplate::Handle(fonts::MONO)
+                        font: FontSource::Handle(fonts::MONO)
                     }
                     HexColorInput
                     on(handle_hex_color_change)
@@ -1069,7 +1069,7 @@ fn demo_column_2() -> impl Scene {
                         Children [
                             @FeathersTabList {
                                 @drag: TabDragMode::Reorder,
-                                @selected: OptionTemplate::Some(#home_tab),
+                                @selected: ~OptionTemplate::Some(#home_tab),
                             }
                             on(tablist_self_update)
                             on(apply_tab_move)
@@ -1113,7 +1113,7 @@ fn demo_column_2() -> impl Scene {
                                 Children [
                                     @FeathersTabList {
                                         @drag: TabDragMode::External,
-                                        @selected: OptionTemplate::Some(#console_tab),
+                                        @selected: ~OptionTemplate::Some(#console_tab),
                                     }
                                     on(tablist_self_update)
                                     on(apply_tab_move)
@@ -1133,7 +1133,7 @@ fn demo_column_2() -> impl Scene {
                                 Children [
                                     @FeathersTabList {
                                         @drag: TabDragMode::External,
-                                        @selected: OptionTemplate::Some(#inspector_tab),
+                                        @selected: ~OptionTemplate::Some(#inspector_tab),
                                     }
                                     on(tablist_self_update)
                                     on(apply_tab_move)
@@ -1201,7 +1201,7 @@ fn demo_column_3() -> impl Scene {
                 --
                 @subpane_body() Children [
                     @FeathersTreeView {
-                        @selected: OptionTemplate::Some(#camera_row),
+                        @selected: ~OptionTemplate::Some(#camera_row),
                         @rows: bsn_list! {
                             #camera_row
                             @FeathersTreeItem {

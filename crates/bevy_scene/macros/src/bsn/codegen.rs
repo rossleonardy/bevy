@@ -280,7 +280,7 @@ impl BsnEntry {
         Ok(match self {
             BsnEntry::TemplatePatch(ty) => {
                 if ty.variant.is_some() {
-                    let template = ty.enum_tokens(ctx, false)?;
+                    let template = ty.enum_tokens(ctx, EnumPathMode::Literal)?;
                     EntryResult::CombinedSceneFunction(quote! {
                         _scene.insert_template(#template);
                     })
@@ -302,7 +302,7 @@ impl BsnEntry {
             }
             BsnEntry::FromTemplatePatch(ty) => {
                 if ty.variant.is_some() {
-                    let template = ty.enum_tokens(ctx, true)?;
+                    let template = ty.enum_tokens(ctx, EnumPathMode::FromTemplate)?;
                     EntryResult::CombinedSceneFunction(quote! {
                         _scene.insert_template(#template);
                     })
@@ -414,7 +414,7 @@ impl BsnScene {
                     bsn_type.patch_tokens(ctx, props_path, false, true, true)?;
                 let path = &bsn_type.path;
                 let template_patch = if bsn_type.variant.is_some() {
-                    let enum_tokens = bsn_type.enum_tokens(ctx, true)?;
+                    let enum_tokens = bsn_type.enum_tokens(ctx, EnumPathMode::FromTemplate)?;
                     let bevy_scene = ctx.bevy_scene;
                     Some(quote! {
                         <#path as #bevy_scene::PatchFromTemplate>::patch(move |__value, _context| {
@@ -456,6 +456,17 @@ impl BsnScene {
     }
 }
 
+/// How [`BsnType::enum_tokens`] resolves the type named by an enum variant path.
+#[derive(Clone, Copy)]
+enum EnumPathMode {
+    /// `<Path as FromTemplate>::Template`. Used for scene roots, which must be templates.
+    FromTemplate,
+    /// `<Path as TemplatePath>::Path`. Used for field values.
+    TemplatePath,
+    /// The path as written. Used for `~Path`.
+    Literal,
+}
+
 impl BsnType {
     fn patch_tokens(
         &self,
@@ -476,7 +487,7 @@ impl BsnType {
                     is_scene_component,
                 )?);
             } else {
-                let value = self.enum_tokens(ctx, is_root)?;
+                let value = self.enum_tokens(ctx, self.enum_path_mode(is_root))?;
 
                 assignments.push(quote! {
                     #(#path).* = #value.into();
@@ -497,23 +508,36 @@ impl BsnType {
 
     fn init_tokens(&self, ctx: &mut BsnCodegenCtx, is_root: bool) -> syn::Result<TokenStream> {
         if self.variant.is_some() {
-            self.enum_tokens(ctx, is_root)
+            self.enum_tokens(ctx, self.enum_path_mode(is_root))
         } else {
             self.struct_init_tokens(ctx, is_root)
         }
     }
 
-    fn enum_tokens(
-        &self,
-        ctx: &mut BsnCodegenCtx,
-        is_root_template: bool,
-    ) -> syn::Result<TokenStream> {
+    /// Picks how an enum variant path is resolved. Roots are always templates. In field position, `~Path` is used as
+    /// written, and anything else goes through `bevy_ecs::template::TemplatePath`, which maps enums deriving
+    /// `FromTemplate` to their template and leaves every other type as-is (to be converted with `.into()`).
+    fn enum_path_mode(&self, is_root: bool) -> EnumPathMode {
+        if is_root {
+            EnumPathMode::FromTemplate
+        } else if self.is_template {
+            EnumPathMode::Literal
+        } else {
+            EnumPathMode::TemplatePath
+        }
+    }
+
+    fn enum_tokens(&self, ctx: &mut BsnCodegenCtx, mode: EnumPathMode) -> syn::Result<TokenStream> {
         let variant = self.variant.as_ref().unwrap();
         let (bevy_scene, bevy_ecs, path) = (ctx.bevy_scene, ctx.bevy_ecs, &self.path);
-        let template_path = if is_root_template {
-            quote! { #bevy_scene::macro_utils::PathResolveHelper::<<#path as #bevy_ecs::template::FromTemplate>::Template> }
-        } else {
-            quote! { #path }
+        let template_path = match mode {
+            EnumPathMode::FromTemplate => {
+                quote! { #bevy_scene::macro_utils::PathResolveHelper::<<#path as #bevy_ecs::template::FromTemplate>::Template> }
+            }
+            EnumPathMode::TemplatePath => {
+                quote! { #bevy_scene::macro_utils::PathResolveHelper::<<#path as #bevy_ecs::template::TemplatePath>::Path> }
+            }
+            EnumPathMode::Literal => quote! { #path },
         };
 
         Ok(match &self.fields {
@@ -1038,6 +1062,7 @@ mod tests {
         let duplicate = BsnType {
             path: parse_quote!(Transform),
             variant: None,
+            is_template: false,
             fields: named_fields(vec![
                 named_field(parse_quote!(x), BsnValue::Expr(quote!({}))),
                 named_field(parse_quote!(x), BsnValue::Expr(quote!({}))),
@@ -1062,11 +1087,13 @@ mod tests {
         let nested_duplicate = BsnType {
             path: parse_quote!(Parent),
             variant: None,
+            is_template: false,
             fields: named_fields(vec![named_field(
                 parse_quote!(Child),
                 BsnValue::Type(BsnType {
                     path: parse_quote!(Child),
                     variant: None,
+                    is_template: false,
                     fields: named_fields(vec![
                         named_field(parse_quote!(x), BsnValue::Expr(quote!({}))),
                         named_field(parse_quote!(x), BsnValue::Expr(quote!({}))),
@@ -1093,6 +1120,7 @@ mod tests {
         let missing = BsnType {
             path: parse_quote!(Transform),
             variant: None,
+            is_template: false,
             fields: named_fields(vec![BsnNamedField {
                 is_prop: false,
                 is_name_shorthand: false,
@@ -1125,11 +1153,13 @@ mod tests {
         let font = BsnType {
             path: parse_quote!(TextFont),
             variant: None,
+            is_template: false,
             fields: named_fields(vec![named_field(
                 parse_quote!(font_size),
                 BsnValue::Type(BsnType {
                     path: parse_quote!(TextSize),
                     variant: Some(parse_quote!(Large)),
+                    is_template: false,
                     fields: named_fields(Vec::new()),
                 }),
             )]),
@@ -1147,7 +1177,7 @@ mod tests {
         assert!(ctx.errors.is_empty());
         assert_eq!(
             res.unwrap()[0].to_string(),
-            "value . font_size = TextSize :: Large { } . into () ;"
+            "value . font_size = bevy_scene :: macro_utils :: PathResolveHelper :: << TextSize as bevy_ecs :: template :: TemplatePath > :: Path > :: Large { } . into () ;"
         );
     }
 
@@ -1161,6 +1191,7 @@ mod tests {
         let duplicate = BsnType {
             path: parse_quote!(MyEnum),
             variant: Some(parse_quote!(Variant)),
+            is_template: false,
             fields: named_fields(vec![
                 named_field(parse_quote!(x), BsnValue::Expr(quote!(1))),
                 named_field(parse_quote!(x), BsnValue::Expr(quote!(2))),
@@ -1187,6 +1218,7 @@ mod tests {
         let handle = BsnType {
             path: parse_quote!(FontSourceTemplate),
             variant: Some(parse_quote!(Handle)),
+            is_template: false,
             fields: BsnFields::Tuple(vec![BsnUnnamedField {
                 value: BsnValue::Expr(quote!(some_borrow.clone())),
                 index: Member::Unnamed(0.into()),

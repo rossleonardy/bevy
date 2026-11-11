@@ -39,7 +39,7 @@ use bevy_reflect::std_traits::ReflectDefault;
 use bevy_reflect::Reflect;
 use bevy_scene::prelude::*;
 use bevy_text::{
-    EditableText, FontSourceTemplate, Justify, LineHeight, TextEdit, TextFont, TextLayout,
+    EditableText, FontSource, Justify, LineHeight, TextEdit, TextFont, TextLayout,
     TextReadWriteMode,
 };
 use bevy_ui::{
@@ -183,7 +183,7 @@ impl FeathersNumberInput {
                             Children [
                                 Text(text)
                                 TextFont {
-                                    font: FontSourceTemplate::Families(fonts::SANS),
+                                    font: FontSource::Families(fonts::SANS),
                                     font_size: size::COMPACT_FONT,
                                 }
                                 PropagateOver<TextFont>
@@ -260,7 +260,7 @@ impl FeathersNumberInput {
                                     left: px(INTERIOR_LABEL_INSET),
                                 }
                                 TextFont {
-                                    font: FontSourceTemplate::Families(fonts::SANS),
+                                    font: FontSource::Families(fonts::SANS),
                                     font_size: size::COMPACT_FONT,
                                 }
                                 ThemedText

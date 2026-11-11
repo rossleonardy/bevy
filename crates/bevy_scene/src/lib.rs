@@ -2242,7 +2242,7 @@ mod tests {
                 --
                 Foo::Entity(#A)
                 --
-                Bar { foo: FooTemplate::Entity(#A) }
+                Bar { foo: Foo::Entity(#A) }
             })
             .unwrap();
 
@@ -2257,6 +2257,64 @@ mod tests {
             },
             world.entity(entities[2]).get::<Bar>().unwrap()
         );
+    }
+
+    #[test]
+    fn enum_from_template_field_values() {
+        let mut app = test_app();
+        app.init_asset::<Image>();
+
+        #[derive(Asset, TypePath)]
+        struct Image;
+
+        #[derive(Component, FromTemplate, PartialEq, Eq, Debug)]
+        enum Icon {
+            Handle(Handle<Image>),
+            Named {
+                image: Handle<Image>,
+                size: u32,
+            },
+            #[default]
+            None,
+        }
+
+        #[derive(Component, FromTemplate, PartialEq, Eq, Debug)]
+        struct Button {
+            icon: Icon,
+        }
+
+        let a = app.world().resource::<AssetServer>().load("a.png");
+        let b = app.world().resource::<AssetServer>().load("b.png");
+        let c = app.world().resource::<AssetServer>().load("c.png");
+        let world = app.world_mut();
+
+        // Variant paths written as field values resolve to the generated template, so variant arguments can use
+        // template-only values such as asset paths.
+        let entity = world
+            .spawn_scene(bsn! { Button { icon: Icon::Handle("a.png") } })
+            .unwrap();
+        assert_eq!(entity.get::<Button>().unwrap().icon, Icon::Handle(a));
+
+        let entity = world
+            .spawn_scene(bsn! { Button { icon: Icon::Named { image: "b.png", size: 2 } } })
+            .unwrap();
+        assert_eq!(
+            entity.get::<Button>().unwrap().icon,
+            Icon::Named { image: b, size: 2 }
+        );
+
+        let entity = world
+            .spawn_scene(
+                bsn! { Button { icon: Icon::Handle("a.png") } Button { icon: Icon::None } },
+            )
+            .unwrap();
+        assert_eq!(entity.get::<Button>().unwrap().icon, Icon::None);
+
+        // Template types can be used directly with `~`.
+        let entity = world
+            .spawn_scene(bsn! { Button { icon: ~IconTemplate::Handle("c.png") } })
+            .unwrap();
+        assert_eq!(entity.get::<Button>().unwrap().icon, Icon::Handle(c));
     }
 
     #[test]

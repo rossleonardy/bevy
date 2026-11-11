@@ -4,7 +4,7 @@
 
 use bevy::{
     prelude::*,
-    text::FontSourceTemplate,
+    text::FontSource,
     ui_widgets::{Activate, Button},
 };
 
@@ -118,7 +118,7 @@ fn label(text: &str) -> impl Scene {
     bsn! {
         Text(text)
         TextFont {
-            font: FontSourceTemplate::Handle("fonts/FiraSans-Bold.ttf"),
+            font: FontSource::Handle("fonts/FiraSans-Bold.ttf"),
             font_size: px(33.0),
         }
         TextColor(Color::srgb(0.9, 0.9, 0.9))
