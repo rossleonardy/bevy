@@ -188,11 +188,15 @@ fn rasterize(bytes: &[u8], settings: &SvgLoaderSettings, path: &Path) -> Result<
 
     // Precalculate the width and height of each mipmap level
     let level_sizes: Vec<_> = (0..mip_level_count)
-        .map(|level| size.mip_level_size(level,
-        TextureDimension::D2))
+        .map(|level| size.mip_level_size(level, TextureDimension::D2))
         .collect();
 
-    let mut data = Vec::with_capacity(level_sizes.iter().map(|s| s.width as usize * s.height as usize * 4).sum());
+    let mut data = Vec::with_capacity(
+        level_sizes
+            .iter()
+            .map(|s| s.width as usize * s.height as usize * 4)
+            .sum(),
+    );
 
     // Rasterize each mipmap into the pixel buffer
     for level_size in level_sizes {
@@ -248,7 +252,7 @@ fn bleed_edges(data: &mut [u8], width: usize, height: usize) {
             let mut weight = 0;
             let (prev_row, next_row_end) = (y.saturating_sub(1), (y + 2).min(height));
             for tex_y in prev_row..next_row_end {
-                let (prev_column, next_column_end) = (x.saturating_sub(1),(x + 2).min(width));
+                let (prev_column, next_column_end) = (x.saturating_sub(1), (x + 2).min(width));
                 for tex_x in prev_column..next_column_end {
                     // Iterate the 3x3 sample
                     let texel = &data[(tex_y * width + tex_x) * 4..][..4];
